@@ -1,0 +1,198 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            String         @id
+    createdAt     DateTime       @default(now()) @map("created_at")
+    updatedAt     DateTime       @default(now()) @map("updated_at")
+    active        Boolean        @default(true)
+    firstname     String
+    lastname      String
+    username      String
+    email         String
+    phoneNumber   String         @map("phone_number")
+    birthDate     DateTime       @map("birth_date")
+    address       Address[]
+    sessions      Session[]
+    consumer      Consumer?
+    administrador Administrator?
+    gender        Gender         @relation(fields: [genderId], references: [id])
+    genderId      String
+}
+
+model Address {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    zipCode   String
+    nickname  String
+    street    String
+    district  String
+    city      String
+    state     String
+    country   String
+    User      User     @relation(fields: [userId], references: [id])
+    userId    String
+}
+
+model Gender {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    content   String
+    User      User[]
+}
+
+model Session {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    token     String   @unique
+    expiredAt DateTime
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+}
+
+model Consumer {
+    id        String    @id
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @map("updated_at")
+    active    Boolean   @default(true)
+    user      User      @relation(fields: [userId], references: [id])
+    userId    String    @unique
+    orders    Order[]
+    favs      Product[]
+}
+
+model Administrator {
+    id        String              @id
+    createdAt DateTime            @default(now()) @map("created_at")
+    updatedAt DateTime            @default(now()) @map("updated_at")
+    active    Boolean             @default(true)
+    user      User                @relation(fields: [userId], references: [id])
+    roles     AdministratorRole[]
+    userId    String              @unique
+}
+
+model AdministratorRole {
+    id             String          @id
+    createdAt      DateTime        @default(now()) @map("created_at")
+    updatedAt      DateTime        @default(now()) @map("updated_at")
+    active         Boolean         @default(true)
+    content        String
+    administrators Administrator[]
+}
+
+model Product {
+    id            String         @id
+    createdAt     DateTime       @default(now()) @map("created_at")
+    updatedAt     DateTime       @default(now()) @map("updated_at")
+    active        Boolean        @default(true)
+    materials     Material[]
+    prices        Int
+    productsOrder ProductOrder[]
+    consumersFav  Consumer[]
+}
+
+model Material {
+    id        String    @id
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @map("updated_at")
+    active    Boolean   @default(true)
+    value     Int
+    products  Product[]
+}
+
+model Order {
+    id            String         @id
+    createdAt     DateTime       @default(now()) @map("created_at")
+    updatedAt     DateTime       @default(now()) @map("updated_at")
+    active        Boolean        @default(true)
+    value         Int
+    status        OrderStatus    @relation(fields: [orderStatusId], references: [id])
+    orderStatusId String
+    consumer      Consumer       @relation(fields: [consumerId], references: [id])
+    consumerId    String
+    shipping      Shipping       @relation(fields: [shippingId], references: [id])
+    shippingId    String
+    productsOrder ProductOrder[]
+}
+
+model OrderStatus {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    content   String
+    ordes     Order[]
+}
+
+model ProductOrder {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    quantity  Int
+    order     Order    @relation(fields: [orderId], references: [id])
+    orderId   String
+    product   Product  @relation(fields: [productId], references: [id])
+    productId String
+}
+
+model Payment {
+    id              String           @id
+    createdAt       DateTime         @default(now()) @map("created_at")
+    updatedAt       DateTime         @default(now()) @map("updated_at")
+    active          Boolean          @default(true)
+    contents        PaymentContent[]
+    status          PaymentStatus    @relation(fields: [paymentStatusId], references: [id])
+    paymentStatusId String
+    type            PaymentType      @relation(fields: [paymentTypeId], references: [id])
+    paymentTypeId   String
+}
+
+model PaymentContent {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    content   String
+    value     String
+    payment   Payment  @relation(fields: [paymentId], references: [id])
+    paymentId String
+}
+
+model PaymentStatus {
+    id        String    @id
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @map("updated_at")
+    active    Boolean   @default(true)
+    content   String
+    payments  Payment[]
+}
+
+model PaymentType {
+    id        String    @id
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @map("updated_at")
+    active    Boolean   @default(true)
+    payments  Payment[]
+}
+
+model Shipping {
+    id        String   @id
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @map("updated_at")
+    active    Boolean  @default(true)
+    orders    Order[]
+}
