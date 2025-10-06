@@ -9,47 +9,44 @@ datasource db {
 }
 
 model User {
-    id            String         @id
-    createdAt     DateTime       @default(now()) @map("created_at")
-    updatedAt     DateTime       @default(now()) @map("updated_at")
-    active        Boolean        @default(true)
+    id            String        @id
+    createdAt     DateTime      @default(now()) @map("created_at")
+    updatedAt     DateTime      @default(now()) @map("updated_at")
+    active        Boolean       @default(true)
     firstname     String
     lastname      String
     username      String
     email         String
-    phoneNumber   String         @map("phone_number")
-    birthDate     DateTime       @map("birth_date")
-    address       Address[]
+    phoneNumber   String        @map("phone_number")
+    birthDate     DateTime      @map("birth_date")
     sessions      Session[]
-    consumer      Consumer?
-    administrador Administrator?
-    gender        Gender         @relation(fields: [genderId], references: [id])
+    customer      Customer?
+    administrador Collaborator?
+    gender        Gender
     genderId      String
 }
 
 model Address {
-    id        String   @id
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @map("updated_at")
-    active    Boolean  @default(true)
-    zipCode   String
-    nickname  String
-    street    String
-    district  String
-    city      String
-    state     String
-    country   String
-    User      User     @relation(fields: [userId], references: [id])
-    userId    String
+    id         String    @id
+    createdAt  DateTime  @default(now()) @map("created_at")
+    updatedAt  DateTime  @default(now()) @map("updated_at")
+    active     Boolean   @default(true)
+    zipCode    String
+    nickname   String
+    street     String
+    district   String
+    city       String
+    state      String
+    country    String
+    Customer   Customer? @relation(fields: [customerId], references: [id])
+    customerId String?
 }
 
-model Gender {
-    id        String   @id
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @map("updated_at")
-    active    Boolean  @default(true)
-    content   String
-    User      User[]
+enum Gender {
+    Male
+    Female
+    Trans
+    Non_binary
 }
 
 model Session {
@@ -63,45 +60,46 @@ model Session {
     userId    String
 }
 
-model Consumer {
+model Customer {
     id        String    @id
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @default(now()) @map("updated_at")
     active    Boolean   @default(true)
     user      User      @relation(fields: [userId], references: [id])
     userId    String    @unique
+    address   Address[]
     orders    Order[]
     favs      Product[]
 }
 
-model Administrator {
-    id        String              @id
-    createdAt DateTime            @default(now()) @map("created_at")
-    updatedAt DateTime            @default(now()) @map("updated_at")
-    active    Boolean             @default(true)
-    user      User                @relation(fields: [userId], references: [id])
-    roles     AdministratorRole[]
-    userId    String              @unique
+model Collaborator {
+    id        String             @id
+    createdAt DateTime           @default(now()) @map("created_at")
+    updatedAt DateTime           @default(now()) @map("updated_at")
+    active    Boolean            @default(true)
+    user      User               @relation(fields: [userId], references: [id])
+    roles     CollaboratorRole[]
+    userId    String             @unique
 }
 
-model AdministratorRole {
-    id             String          @id
-    createdAt      DateTime        @default(now()) @map("created_at")
-    updatedAt      DateTime        @default(now()) @map("updated_at")
-    active         Boolean         @default(true)
-    content        String
-    administrators Administrator[]
-}
-
-model Product {
+model CollaboratorRole {
     id            String         @id
     createdAt     DateTime       @default(now()) @map("created_at")
     updatedAt     DateTime       @default(now()) @map("updated_at")
     active        Boolean        @default(true)
-    materials     Material[]
-    prices        Int
-    productsOrder ProductOrder[]
-    consumersFav  Consumer[]
+    content       String
+    collaborators Collaborator[]
+}
+
+model Product {
+    id              String           @id
+    createdAt       DateTime         @default(now()) @map("created_at")
+    updatedAt       DateTime         @default(now()) @map("updated_at")
+    active          Boolean          @default(true)
+    materials       Material[]
+    prices          Int
+    productsOrdered ProductOrdered[]
+    customersFav    Customer[]
 }
 
 model Material {
@@ -114,30 +112,32 @@ model Material {
 }
 
 model Order {
-    id            String         @id
-    createdAt     DateTime       @default(now()) @map("created_at")
-    updatedAt     DateTime       @default(now()) @map("updated_at")
-    active        Boolean        @default(true)
-    value         Int
-    status        OrderStatus    @relation(fields: [orderStatusId], references: [id])
-    orderStatusId String
-    consumer      Consumer       @relation(fields: [consumerId], references: [id])
-    consumerId    String
-    shipping      Shipping       @relation(fields: [shippingId], references: [id])
-    shippingId    String
-    productsOrder ProductOrder[]
+    id              String           @id
+    createdAt       DateTime         @default(now()) @map("created_at")
+    updatedAt       DateTime         @default(now()) @map("updated_at")
+    active          Boolean          @default(true)
+    value           Int
+    status          OrderStatus
+    customer        Customer         @relation(fields: [customerId], references: [id])
+    customerId      String
+    shipping        Shipping         @relation(fields: [shippingId], references: [id])
+    shippingId      String
+    productsOrdered ProductOrdered[]
 }
 
-model OrderStatus {
-    id        String   @id
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @map("updated_at")
-    active    Boolean  @default(true)
-    content   String
-    ordes     Order[]
+enum OrderStatus {
+    Pending
+    Canceled_by_Client
+    Canceled_by_Shop
+    Approved
+    Waiting_for_Shipping
+    Out_for_delivery
+    Waiting_for_withdrawal
+    Delivered
+    Finishing
 }
 
-model ProductOrder {
+model ProductOrdered {
     id        String   @id
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @map("updated_at")
@@ -150,15 +150,14 @@ model ProductOrder {
 }
 
 model Payment {
-    id              String           @id
-    createdAt       DateTime         @default(now()) @map("created_at")
-    updatedAt       DateTime         @default(now()) @map("updated_at")
-    active          Boolean          @default(true)
-    contents        PaymentContent[]
-    status          PaymentStatus    @relation(fields: [paymentStatusId], references: [id])
-    paymentStatusId String
-    type            PaymentType      @relation(fields: [paymentTypeId], references: [id])
-    paymentTypeId   String
+    id            String           @id
+    createdAt     DateTime         @default(now()) @map("created_at")
+    updatedAt     DateTime         @default(now()) @map("updated_at")
+    active        Boolean          @default(true)
+    contents      PaymentContent[]
+    status        PaymentStatus
+    type          PaymentType
+    paymentTypeId String
 }
 
 model PaymentContent {
@@ -172,27 +171,50 @@ model PaymentContent {
     paymentId String
 }
 
-model PaymentStatus {
-    id        String    @id
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @default(now()) @map("updated_at")
-    active    Boolean   @default(true)
-    content   String
-    payments  Payment[]
+enum PaymentStatus {
+    Pending
+    Under_Analysis
+    Approved
+    Captured
+    Canceled
+    Denied
+    Reversed
+    Chargeback
 }
 
-model PaymentType {
-    id        String    @id
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @default(now()) @map("updated_at")
-    active    Boolean   @default(true)
-    payments  Payment[]
+enum PaymentType {
+    Credit
+    Debit
+    Pix
 }
 
 model Shipping {
-    id        String   @id
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @default(now()) @map("updated_at")
-    active    Boolean  @default(true)
-    orders    Order[]
+    id             String              @id
+    createdAt      DateTime            @default(now()) @map("created_at")
+    updatedAt      DateTime            @default(now()) @map("updated_at")
+    active         Boolean             @default(true)
+    shippingStatus ShippingSituation[]
+    orders         Order[]
+}
+
+model ShippingSituation {
+    id             String         @id
+    createdAt      DateTime       @default(now()) @map("created_at")
+    updatedAt      DateTime       @default(now()) @map("updated_at")
+    active         Boolean        @default(true)
+    date           DateTime       @default(now())
+    shippingStatus ShippingStatus
+    shipping       Shipping       @relation(fields: [shippingId], references: [id])
+    shippingId     String
+}
+
+enum ShippingStatus {
+    In_separation
+    Packed_In_transit
+    Delivered
+    Delivery_failure
+    Waiting_for_Shipping
+    Out_for_delivery
+    Waiting_for_withdrawal
+    Returned_to_sender
 }
